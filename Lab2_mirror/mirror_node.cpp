@@ -31,35 +31,79 @@ class MirrorNode : public rclcpp::Node
 public:
   MirrorNode(rclcpp::NodeOptions options) : Node("mirror", options)
   {
-    // init whatever is needed for your node
+	// init whatever is needed for your node
     // these suffixes may be useful
     const std::vector<std::string> suffixes = {"_s0", "_s1", "_e0", "_e1", "_w0", "_w1", "_w2"};
-    
+	  
+    // joint mapping
+    joint_mapping_ = {
+      {"right_s0", "left_s0"},
+      {"right_s1", "left_s1"},
+      {"right_e0", "left_e0"},
+      {"right_e1", "left_e1"},
+      {"right_w0", "left_w0"},
+      {"right_w1", "left_w1"},
+      {"right_w2", "left_w2"}
+    };
+
     // init command message
+    // command_msg_.mode = JointCommand::POSITION_MODE;
+    command_msg_.mode = 1;
 
     // init subscriber
+    joint_state_subscription_ = this->create_subscription<JointState>("robot/joint_states", 10, std::bind(&MirrorNode::joint_state_callback, this, std::placeholders::_1));
 
     // init publisher
-    
+    command_publisher_ = this->create_publisher<JointCommand>("robot/limb/left/joint_command", 10);
   }
-  
-private:
 
-  // declare any subscriber / publisher / member variables and functions
-  
-  
+private:
+	std::map<std::string, std::string> joint_mapping_;
+	JointCommand command_msg_;
+	rclcpp::Subscription<JointState>::SharedPtr joint_state_subscription_;
+	rclcpp::Publisher<JointCommand>::SharedPtr command_publisher_;
+	
+	void joint_state_callback(const JointState::SharedPtr msg)
+	{
+		// check receaving signal
+		// RCLCPP_INFO(this->get_logger(), "Received joint state message");
+		
+		// clear previous command messages
+		command_msg_.names.clear();
+		command_msg_.command.clear();
+		
+		
+		
+		for (const auto& mapping : joint_mapping_) {
+        size_t index = findIndex(mapping.first, msg->name);
+        if (index != msg->name.size()) {
+            command_msg_.names.push_back(mapping.second);
+            double position = msg->position[index];
+
+            // specific joint(S0, E0, W0, W2) change
+            if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
+                position = -position; // 値を反転
+            }
+
+            command_msg_.command.push_back(position);
+			}
+		}
+
+		if (!command_msg_.names.empty()) {
+			command_publisher_->publish(command_msg_);
+		}
+	}
 };
 
 }
 
-
-
 // boilerplate main function
 
 int main(int argc, char** argv)
-{   
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<lab2_mirror::MirrorNode>(rclcpp::NodeOptions{}));
   rclcpp::shutdown();
   return 0;
 }
+
