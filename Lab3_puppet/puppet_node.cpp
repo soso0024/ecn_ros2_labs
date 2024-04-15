@@ -41,45 +41,52 @@ public:
 private:
 
   // declare member variables for command publisher and timer
+  JointCommand left_arm_command_;   // Declare the JointCommand for the left arm
+  rclcpp::Publisher<JointCommand>::SharedPtr command_publisher_;  // Declare the publisher
+  rclcpp::TimerBase::SharedPtr timer_;  // Declare the timer
 
+  // TF 2 and IK service declarations remain the same
   ServiceNodeSync<SolvePositionIK> ik_node;
-
-  // TF 2 stuff
   tf2_ros::Buffer tf_buffer{get_clock()};                // stores all previous elementary transforms in a tree
   tf2_ros::TransformListener tf_listener{tf_buffer};   // subscribes to /tf
 
-  void publishCommand()
-  {
-    // check if the transform from base to left_gripper_desired is available
+   void publishCommand()
+   {
     if(tf_buffer.canTransform("left_gripper_desired", "base", tf2::TimePointZero, tf2::durationFromSec(1.0)))
     {
-      // get this transform with tf_buffer.lookupTransform("base", "left_gripper_desired", ...
-	  auto transform = tf_buffer.lookupTransform("base", "left_gripper_desired", tf2::TimePointZero);
+        auto transform = tf_buffer.lookupTransform("base", "left_gripper_desired", tf2::TimePointZero);
+        SolvePositionIK::Request req;
+        geometry_msgs::msg::PoseStamped pose_stamped;
+        pose_stamped.header.frame_id = "base";
+        pose_stamped.header.stamp = rclcpp::Clock().now();
+        pose_stamped.pose.position.x = transform.transform.translation.x;
+        pose_stamped.pose.position.y = transform.transform.translation.y;
+        pose_stamped.pose.position.z = transform.transform.translation.z;
+        pose_stamped.pose.orientation.w = transform.transform.rotation.w;
+        pose_stamped.pose.orientation.x = transform.transform.rotation.x;
+        pose_stamped.pose.orientation.y = transform.transform.rotation.y;
+        pose_stamped.pose.orientation.z = transform.transform.rotation.z;
+        req.pose_stamp.push_back(pose_stamped);
 
-      // build service request SolvePositionIK::Request from obtained transform
-      SolvePositionIK::Request req;
-	  req.pose.header.frame_id = "base";
-	  req.pose.pose.position.x = transform.transform.translation.x;
-	  req.pose.pose.position.y = transform.transform.translation.y;
-	  req.pose.pose.position.z = transform.transform.translation.z;
-	  req.pose.pose.orientation = transform.transform.rotation;
-      
-      // call service and get response
-      if (ik_node.call(req, res) && res.is_valid)
-	  {
-		  // call to IK was successfull, check if the solution is valid
-		  JointCommand command;
-		  command.mode = JointCommand::POSITION_MODE;
-		  for (auto& joint : res.joints)
-		  {
-			command.names.push_back(joint.name);
-			command.command.push_back(joint.position);
-		  }
-		  // copy response data to joint command and publish to left arm
-		  command_publisher_->publish(command);
-	   }
+        if (SolvePositionIK::Response res; ik_node.call(req, res))
+        {
+            JointCommand command;
+            command.mode = JointCommand::POSITION_MODE;
+            for (const auto& joint : res.joints)
+            {
+                for (const auto& name : joint.name)
+                {
+                    command.names.push_back(name);
+                }
+                for (const auto& position : joint.position)
+                {
+                    command.command.push_back(position);
+                }
+            }
+            command_publisher_->publish(command);
+        }
     }
-  }
+   }
 };
 }
 
