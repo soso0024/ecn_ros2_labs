@@ -30,7 +30,7 @@ class Vel2Joints(Node):
         self.dt = self.declare_parameter("dt", 0.1).value
         self.timer = self.create_timer(self.dt, self.publish)
                 
-        self.spawn(self.declare_parameter("static_tf", False).value)
+        self.spawn(self.declare_parameter("static_tf", True).value)
         
     def spawn(self, static_tf):
         
@@ -61,7 +61,7 @@ class Vel2Joints(Node):
             req.y = 0.
             req.theta = 0.
             req.laser_color = [255,0,0]
-            
+
         elif robot == 'bb9':
             req.x = 14.6
             req.y = 15.1
@@ -72,18 +72,19 @@ class Vel2Joints(Node):
             req.y = 14.
             req.theta = 2.7
             req.laser_color = [0,200,0]
+
         else:   # d9
             req.x = 2.3
             req.y = -7.7
             req.theta = 0.8
-            
+
         self.future = spawner.call_async(req)
         self.get_logger().info(f'spawned robot {robot} in map_simulator')
                 
     def cmd_callback(self, msg):
         self.v = msg.linear.x
-        self.w = msg.angular.z
 
+        self.w = msg.angular.z
         
     def publish(self):
         self.js.position[0] += self.v*self.dt/self.radius

@@ -1,6 +1,8 @@
 from simple_launch import SimpleLauncher
 import yaml
 
+from nav2_common.launch import RewrittenYaml
+
 # in this launch file SimpleLauncher is declared in the main body
 sl = SimpleLauncher()
 
@@ -40,22 +42,35 @@ def launch_setup():
             nav2_params = sl.find('lab4_navigation', f'nav2_params_{sl.ros_version()}.yaml')
 
             # TODO: adapt the default parameters to this robot: namespace, links, radius
-            configured_params = nav2_params
+            configured_params = RewrittenYaml(source_file = nav2_params,
+											root_key = robot,
+											param_rewrites={
+												'base_frame_id': '/' + robot + '/base_link',
+												'odom_frame_id': '/' + robot + '/odom',
+												'scan_topic': '/' + robot + '/scan'
+											},
+											convert_types = True)
 
-
-
-            # TODO: remap some topics, some nav2 nodes assume a local map topic or an absolute scan topic
-            remappings = {}
+            # TODO: remap some topics, some nav2 nodes assume a local map topic or an absolute scan topic            
+            remappings = {
+				('map_topic', '/' + robot + '/map'),
+				('scan_topic', '/' + robot + '/scan')
+			}
 
             # launch navigation nodes
             for pkg,executable in nav2_nodes:
                 sl.node(pkg, executable,name=executable,
                     parameters=[configured_params],
                     remappings=remappings)
+            
+            robot_rad = '.27' if robot_type=='bb' else '.16'
+            configured_params['robot_rad'] = robot_rad
 
             # also run overall manager
             sl.node('nav2_lifecycle_manager','lifecycle_manager',name='lifecycle_manager',
             output='screen', parameters={'autostart': True,'node_names': node_names})
+            
+            # 'default_bt_xml_filename': sl.find('nav2_bt_navigator','navigate_w_replanning_time.xml') # or another file
 
     return sl.launch_description()
 
