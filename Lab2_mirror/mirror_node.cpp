@@ -72,23 +72,21 @@ private:
 		command_msg_.names.clear();
 		command_msg_.command.clear();
 		
-		
-		
 		for (const auto& mapping : joint_mapping_) {
-        size_t index = findIndex(mapping.first, msg->name);
-        if (index != msg->name.size()) {
-            command_msg_.names.push_back(mapping.second);
-            double position = msg->position[index];
-
-            // specific joint(S0, E0, W0, W2) change
-            if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
-                position = -position; // 値を反転
-            }
-
-            command_msg_.command.push_back(position);
+	        	size_t index = findIndex(mapping.first, msg->name);
+	        	if (index != msg->name.size()) {
+	            		command_msg_.names.push_back(mapping.second);
+	            		double position = msg->position[index];
+	
+	            	// specific joint(S0, E0, W0, W2) change
+	            	if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
+	                	position = -position; // 値を反転
+	            	}
+	
+	            	command_msg_.command.push_back(position);
 			}
 		}
-
+	
 		if (!command_msg_.names.empty()) {
 			command_publisher_->publish(command_msg_);
 		}
