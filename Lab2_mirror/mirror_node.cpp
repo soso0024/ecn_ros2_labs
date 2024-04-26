@@ -31,10 +31,10 @@ class MirrorNode : public rclcpp::Node
 public:
   MirrorNode(rclcpp::NodeOptions options) : Node("mirror", options)
   {
-	// init whatever is needed for your node
+        // init whatever is needed for your node
     // these suffixes may be useful
     const std::vector<std::string> suffixes = {"_s0", "_s1", "_e0", "_e1", "_w0", "_w1", "_w2"};
-	  
+
     // joint mapping
     joint_mapping_ = {
       {"right_s0", "left_s0"},
@@ -58,39 +58,38 @@ public:
   }
 
 private:
-	std::map<std::string, std::string> joint_mapping_;
-	JointCommand command_msg_;
-	rclcpp::Subscription<JointState>::SharedPtr joint_state_subscription_;
-	rclcpp::Publisher<JointCommand>::SharedPtr command_publisher_;
-	
-	void joint_state_callback(const JointState::SharedPtr msg)
-	{
-		// check receaving signal
-		// RCLCPP_INFO(this->get_logger(), "Received joint state message");
-		
-		// clear previous command messages
-		command_msg_.names.clear();
-		command_msg_.command.clear();
-		
-		for (const auto& mapping : joint_mapping_) {
-	        	size_t index = findIndex(mapping.first, msg->name);
-	        	if (index != msg->name.size()) {
-	            		command_msg_.names.push_back(mapping.second);
-	            		double position = msg->position[index];
-	
-	            	// specific joint(S0, E0, W0, W2) change
-	            	if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
-	                	position = -position; // 値を反転
-	            	}
-	
-	            	command_msg_.command.push_back(position);
-			}
-		}
-	
-		if (!command_msg_.names.empty()) {
-			command_publisher_->publish(command_msg_);
-		}
-	}
+    std::map<std::string, std::string> joint_mapping_;
+    JointCommand command_msg_;
+    rclcpp::Subscription<JointState>::SharedPtr joint_state_subscription_;
+    rclcpp::Publisher<JointCommand>::SharedPtr command_publisher_;
+
+    void joint_state_callback(const JointState::SharedPtr msg)
+    {
+        // check receaving signal
+        // RCLCPP_INFO(this->get_logger(), "Received joint state message");
+
+        // clear previous command messages
+        command_msg_.names.clear();
+        command_msg_.command.clear();
+
+        for (const auto& mapping : joint_mapping_) {
+            size_t index = findIndex(mapping.first, msg->name);
+            if (index != msg->name.size()) {
+                command_msg_.names.push_back(mapping.second);
+                double position = msg->position[index];
+
+                // specific joint(s0, e0, w0, w2) change
+                if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
+                        position = -position;
+                }
+
+                command_msg_.command.push_back(position);
+            }
+        }
+        if (!command_msg_.names.empty()) {
+                command_publisher_->publish(command_msg_);
+        }
+    }
 };
 
 }
@@ -105,3 +104,37 @@ int main(int argc, char** argv)
   return 0;
 }
 
+
+
+/* Keep Memo
+
+colcon build --packages-select lab2_mirror
+source install/setup.bash
+ros2 run lab2_mirror mirror_node
+
+
+ros2 interface show sensor_msgs/msg/JointState
+std_msgs/Header header
+        builtin_interfaces/Time stamp
+                int32 sec
+                uint32 nanosec
+        string frame_id
+
+string[] name
+float64[] position
+float64[] velocity
+float64[] effort
+
+
+
+ros2 interface show baxter_core_msgs/msg/JointCommand
+int32 mode
+float64[] command
+string[] names
+
+int32 POSITION_MODE =1
+int32 VELOCITY_MODE =2
+int32 TORQUE_MODE =3
+int32 RAW_POSITION_MODE =4
+
+ */
