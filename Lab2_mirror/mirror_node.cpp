@@ -73,17 +73,19 @@ private:
         command_msg_.command.clear();
 
         for (const auto& mapping : joint_mapping_) {
-            size_t index = findIndex(mapping.first, msg->name);
+            size_t index = findIndex(mapping.first, msg->name);   // mapping.first is right joints
+          
             if (index != msg->name.size()) {
-                command_msg_.names.push_back(mapping.second);
+                command_msg_.names.push_back(mapping.second);     // mapping.second is left joints
                 double position = msg->position[index];
-
+              
                 // specific joint(s0, e0, w0, w2) have to change the sign to be mirroring
                 if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
                         position = -position;
                 }
-
+              
                 command_msg_.command.push_back(position);
+              
             }
         }
         if (!command_msg_.names.empty()) {
