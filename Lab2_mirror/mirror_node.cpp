@@ -31,9 +31,9 @@ class MirrorNode : public rclcpp::Node
 public:
   MirrorNode(rclcpp::NodeOptions options) : Node("mirror", options)
   {
-        // init whatever is needed for your node
+    // init whatever is needed for your node
     // these suffixes may be useful
-    const std::vector<std::string> suffixes = {"_s0", "_s1", "_e0", "_e1", "_w0", "_w1", "_w2"};
+    // const std::vector<std::string> suffixes = {"_s0", "_s1", "_e0", "_e1", "_w0", "_w1", "_w2"};
 
     // joint mapping
     joint_mapping_ = {
