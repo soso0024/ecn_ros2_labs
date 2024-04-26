@@ -78,7 +78,7 @@ private:
                 command_msg_.names.push_back(mapping.second);
                 double position = msg->position[index];
 
-                // specific joint(s0, e0, w0, w2) change
+                // specific joint(s0, e0, w0, w2) have to change the sign to be mirroring
                 if (mapping.first == "right_s0" || mapping.first == "right_e0" || mapping.first == "right_w0" || mapping.first == "right_w2") {
                         position = -position;
                 }
