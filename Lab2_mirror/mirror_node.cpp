@@ -108,10 +108,12 @@ int main(int argc, char** argv)
 
 /* Keep Memo
 
+<Rub Command>
 colcon build --packages-select lab2_mirror
 source install/setup.bash
 ros2 run lab2_mirror mirror_node
 
+---------------------------------------------------------
 
 ros2 interface show sensor_msgs/msg/JointState
 std_msgs/Header header
@@ -125,7 +127,7 @@ float64[] position
 float64[] velocity
 float64[] effort
 
-
+---------------------------------------------------------
 
 ros2 interface show baxter_core_msgs/msg/JointCommand
 int32 mode
