@@ -23,10 +23,6 @@ class PuppetNode : public rclcpp::Node
 public:
   PuppetNode(rclcpp::NodeOptions options) : Node("puppet", options)
   {
-    // init whatever is needed for your node
-
-    // init command message for left arm
-
     // init publisher to left arm command
     publisher_ = this->create_publisher<JointCommand>("robot/limb/left/joint_command", 10);
 
