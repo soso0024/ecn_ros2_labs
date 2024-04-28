@@ -82,9 +82,6 @@ private:
               std::copy(res.joints[0].position.begin(), res.joints[0].position.end(), command_msg.command.begin());
               publisher_->publish(command_msg);
           }
-        // copy response data to joint command and publish to left arm
-
-
       }
     }
   }
