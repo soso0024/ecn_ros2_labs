@@ -10,6 +10,7 @@
 
 // access time units such as 100ms
 using namespace std::chrono_literals;
+using std::placeholders::_1;
 
 // some shortcuts for message classes
 using sensor_msgs::msg::JointState;
@@ -51,7 +52,7 @@ public:
     command_msg_.mode = 1;
 
     // init subscriber
-    joint_state_subscription_ = this->create_subscription<JointState>("robot/joint_states", 10, std::bind(&MirrorNode::joint_state_callback, this, std::placeholders::_1));
+    joint_state_subscription_ = this->create_subscription<JointState>("robot/joint_states", 10, std::bind(&MirrorNode::joint_state_callback, this, _1));
 
     // init publisher
     command_publisher_ = this->create_publisher<JointCommand>("robot/limb/left/joint_command", 10);
