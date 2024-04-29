@@ -115,6 +115,7 @@ int main(int argc, char** argv)
 colcon build --packages-select lab2_mirror
 source install/setup.bash
 ros2 run lab2_mirror mirror_node
+(ros2 run <package_name> <executable_file>)
 
 ---------------------------------------------------------
 
@@ -130,7 +131,27 @@ float64[] position
 float64[] velocity
 float64[] effort
 
+
+[ROS2@baxter] ~/ros2$ ros2 interface proto sensor_msgs/msg/JointState
+"header:
+  stamp:
+    sec: 0
+    nanosec: 0
+  frame_id: ''
+name: []
+position: []
+velocity: []
+effort: []
+"
+
+
 ---------------------------------------------------------
+
+[ROS2@baxter] ~/ros2$ ros2 topic info /robot/limb/left/joint_command
+Type: baxter_core_msgs/msg/JointCommand
+Publisher count: 1
+Subscription count: 1
+
 
 ros2 interface show baxter_core_msgs/msg/JointCommand
 int32 mode

@@ -6,6 +6,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <baxter_core_msgs/msg/joint_command.hpp>
 #include <baxter_core_msgs/srv/solve_position_ik.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <algorithm>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
@@ -14,6 +16,8 @@
 using namespace std::chrono_literals;
 using baxter_core_msgs::msg::JointCommand;
 using baxter_core_msgs::srv::SolvePositionIK;
+using geometry_msgs::msg::TransformStamped;
+using geometry_msgs::msg::PoseStamped;
 
 namespace lab3_puppet
 {
@@ -27,7 +31,7 @@ public:
     publisher_ = this->create_publisher<JointCommand>("robot/limb/left/joint_command", 10);
 
     // init timer - the function publishCommand() should called with the given rate
-    timer_ = this->create_wall_timer(100ms, std::bind(&PuppetNode::publishCommand, this));
+    timer_ = this->create_wall_timer(50ms, std::bind(&PuppetNode::publishCommand, this));
 
     // IK service wrapper into IKNode
     ik_node.init("ik_node","/ExternalTools/left/PositionKinematicsNode/IKService");
@@ -46,8 +50,8 @@ private:
 
   void publishCommand()
   {
-    geometry_msgs::msg::TransformStamped transform;
-    baxter_core_msgs::msg::JointCommand command_msg;
+    TransformStamped transform;
+    JointCommand command_msg;
 
     // check if the transform from base to left_gripper_desired is available
     if(tf_buffer.canTransform("left_gripper_desired", "base", tf2::TimePointZero, tf2::durationFromSec(1.0)))
@@ -57,7 +61,7 @@ private:
 
       // build service request SolvePositionIK::Request from obtained transform
       SolvePositionIK::Request req;
-      geometry_msgs::msg::PoseStamped pose_stamped;
+      PoseStamped pose_stamped;
 
       pose_stamped.pose.position.x = transform.transform.translation.x;
       pose_stamped.pose.position.y = transform.transform.translation.y;
@@ -67,21 +71,21 @@ private:
       pose_stamped.pose.orientation.z = transform.transform.rotation.z;
 
       req.pose_stamp.push_back(pose_stamped);
-      command_msg.set__mode(1);
+      command_msg.mode = 1;
       command_msg.set__names({"left_s0", "left_s1","left_e0","left_e1","left_w0","left_w1","left_w2"});
       command_msg.command.resize(command_msg.names.size(),0.0);
+
       // call service and get response
       if(SolvePositionIK::Response res; ik_node.call(req, res))
       {
         // call to IK was successfull, check if the solution is valid
           if(res.is_valid[0]){
               std::copy(res.joints[0].position.begin(), res.joints[0].position.end(), command_msg.command.begin());
+//               Insted of Copy
+//               command_msg.mode = 1;
+//               command_msg.names = res.joints[0].name;
+//               command_msg.command = res.joints[0].positions;
               publisher_->publish(command_msg);
-
-              // Insted of Copy
-              // command_msg.mode = 1;
-              // command_msg.names = res.joint[0].name;
-              // command_msg.command = res.joints[0].positions;
           }
       }
     }
@@ -96,6 +100,15 @@ RCLCPP_COMPONENTS_REGISTER_NODE(lab3_puppet::PuppetNode)
 
 
 /*
+<Run Command>
+After Simulation
+
+ros2 run tf2_ros static_transform_publisher 0 0 0.1 0 3.14 0 right_gripper left_gripper_desired
+
+ros2 run lab3_puppet puppet
+
+------------------------------------------------------------------------------------------------------
+
 [ROS2@baxter] ~/ros2$ ros2 interface show sensor_msgs/msg/JointState
 # This is a message that holds data to describe the state of a set of torque controlled joints.
 #
