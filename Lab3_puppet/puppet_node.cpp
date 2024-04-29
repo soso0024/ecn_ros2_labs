@@ -77,6 +77,11 @@ private:
           if(res.is_valid[0]){
               std::copy(res.joints[0].position.begin(), res.joints[0].position.end(), command_msg.command.begin());
               publisher_->publish(command_msg);
+
+              // insted of copy
+              // command_msg.mode = 1;
+              // command_msg.names = res.joint[0].name;
+              // command_msg.command = res.joints[0].positions;
           }
       }
     }
