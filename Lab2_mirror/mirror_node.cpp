@@ -10,11 +10,12 @@
 
 // access time units such as 100ms
 using namespace std::chrono_literals;
-using std::placeholders::_1;
 
 // some shortcuts for message classes
 using sensor_msgs::msg::JointState;
 using baxter_core_msgs::msg::JointCommand;
+
+using std::placeholders::_1;
 
 // a useful function to get the index of a string in a vector of strings
 // returns the size of the vector if not found
